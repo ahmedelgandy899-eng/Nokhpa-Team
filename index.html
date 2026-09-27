@@ -703,7 +703,92 @@ function next() {
 }
 
 /* FINISH */
-function finish() {
+/* STUDENT INFO */
+let studentName = '';
+let studentCode = '';
+
+function showStudentForm() {
+  clearInterval(timerInterval);
+
+  document.getElementById('app').innerHTML = `
+    <div class="result-hero">
+      <div style="font-size:45px;margin-bottom:12px;">📝</div>
+
+      <div class="result-grade" style="color:var(--accent);">
+        بيانات الطالب
+      </div>
+
+      <div class="result-sub" style="margin-bottom:22px;">
+        من فضلك اكتب اسمك وكود الكشف قبل عرض النتيجة
+      </div>
+
+      <div style="text-align:right;margin-bottom:12px;">
+        <label style="display:block;font-size:13px;font-weight:700;color:var(--text2);margin-bottom:6px;">
+          الاسم
+        </label>
+
+        <input
+          id="studentNameInput"
+          type="text"
+          placeholder="اكتب اسمك بالكامل"
+          style="width:100%;padding:13px 14px;border:1px solid var(--bc);border-radius:10px;background:var(--bg);color:var(--text);font-family:inherit;font-size:14px;outline:none;"
+        >
+      </div>
+
+      <div style="text-align:right;margin-bottom:18px;">
+        <label style="display:block;font-size:13px;font-weight:700;color:var(--text2);margin-bottom:6px;">
+          كود الكشف
+        </label>
+
+        <input
+          id="studentCodeInput"
+          type="text"
+          placeholder="اكتب كود الكشف"
+          style="width:100%;padding:13px 14px;border:1px solid var(--bc);border-radius:10px;background:var(--bg);color:var(--text);font-family:inherit;font-size:14px;outline:none;"
+        >
+      </div>
+
+      <div
+        id="studentError"
+        style="display:none;color:var(--danger);background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);border-radius:10px;padding:10px;margin-bottom:12px;font-size:13px;font-weight:700;"
+      >
+        من فضلك اكتب الاسم وكود الكشف
+      </div>
+
+      <button class="btn btn-next" onclick="saveStudentInfo()">
+        ✅ تأكيد وعرض النتيجة
+      </button>
+    </div>
+  `;
+
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function saveStudentInfo() {
+  const name = document.getElementById('studentNameInput').value.trim();
+  const code = document.getElementById('studentCodeInput').value.trim();
+  const error = document.getElementById('studentError');
+
+  if (!name || !code) {
+    error.style.display = 'block';
+    return;
+  }
+
+  studentName = name;
+  studentCode = code;
+
+  finish(true);
+}
+
+
+/* FINISH */
+function finish(showResult = false) {
+
+  if (!showResult) {
+    showStudentForm();
+    return;
+  }
+
   clearInterval(timerInterval);
   const total = questions.length;
   const score = Math.round((correct / total) * 100);
@@ -711,72 +796,242 @@ function finish() {
   questions.forEach((q, idx) => {
     if (answers[idx] !== q.a) wrongSet.push({...q, myAns: answers[idx]});
   });
+
   wrongSet = [...new Map(wrongSet.map(q => [q.t, q])).values()];
 
   let grade, gradeColor;
-  if (score >= 90) { grade = '🥇 ممتاز'; gradeColor = 'var(--success)'; }
-  else if (score >= 75) { grade = '🥈 جيد جداً'; gradeColor = 'var(--accent)'; }
-  else if (score >= 60) { grade = '🥉 جيد'; gradeColor = 'var(--warn)'; }
-  else { grade = '📚 راجع تاني'; gradeColor = 'var(--danger)'; }
+
+  if (score >= 90) {
+    grade = '🥇 ممتاز';
+    gradeColor = 'var(--success)';
+  }
+  else if (score >= 75) {
+    grade = '🥈 جيد جداً';
+    gradeColor = 'var(--accent)';
+  }
+  else if (score >= 60) {
+    grade = '🥉 جيد';
+    gradeColor = 'var(--warn)';
+  }
+  else {
+    grade = '📚 راجع تاني';
+    gradeColor = 'var(--danger)';
+  }
 
   const circ = 2 * Math.PI * 45;
   const offset = circ - (score / 100) * circ;
 
   const reportHTML = questions.map((q, idx) => {
     const ok = answers[idx] === q.a;
+
     return `<div class="report-item ${ok ? 'ok' : 'no'}">
       <div class="ri-q">${ok ? '✅' : '❌'} ${q.t}</div>
+
       ${!ok ? `
-        <div class="ri-row"><span class="ri-badge ri-yours">إجابتك</span> ${answers[idx] >= 0 ? q.o[answers[idx]] : 'تم التخطي'}</div>
-        <div class="ri-row"><span class="ri-badge ri-right">الصحيح</span> ${q.o[q.a]}</div>
+        <div class="ri-row">
+          <span class="ri-badge ri-yours">إجابتك</span>
+          ${answers[idx] >= 0 ? q.o[answers[idx]] : 'تم التخطي'}
+        </div>
+
+        <div class="ri-row">
+          <span class="ri-badge ri-right">الصحيح</span>
+          ${q.o[q.a]}
+        </div>
       ` : ''}
     </div>`;
   }).join('');
 
   document.getElementById('prog-bar').style.width = '100%';
+
   document.getElementById('app').innerHTML = `
     <div class="result-hero">
+
+      <!-- بيانات الطالب -->
+      <div style="
+        background:var(--bg2);
+        border:1px solid var(--bc);
+        border-radius:12px;
+        padding:14px;
+        margin-bottom:20px;
+        text-align:right;
+      ">
+
+        <div style="
+          font-size:12px;
+          color:var(--text3);
+          margin-bottom:4px;
+        ">
+          اسم الطالب
+        </div>
+
+        <div style="
+          font-size:17px;
+          font-weight:900;
+          color:var(--text);
+          margin-bottom:12px;
+        ">
+          ${studentName}
+        </div>
+
+        <div style="
+          font-size:12px;
+          color:var(--text3);
+          margin-bottom:4px;
+        ">
+          كود الكشف
+        </div>
+
+        <div style="
+          font-size:16px;
+          font-weight:900;
+          color:var(--accent);
+        ">
+          ${studentCode}
+        </div>
+
+      </div>
+
       <div class="score-ring">
         <svg viewBox="0 0 110 110">
-          <circle class="ring-bg" cx="55" cy="55" r="45" stroke-dasharray="${circ}" stroke-dashoffset="0"/>
-          <circle class="ring-fill" cx="55" cy="55" r="45" stroke-dasharray="${circ}" stroke-dashoffset="${circ}"
-            style="stroke:${gradeColor}" id="ringFill"/>
+
+          <circle
+            class="ring-bg"
+            cx="55"
+            cy="55"
+            r="45"
+            stroke-dasharray="${circ}"
+            stroke-dashoffset="0"
+          />
+
+          <circle
+            class="ring-fill"
+            cx="55"
+            cy="55"
+            r="45"
+            stroke-dasharray="${circ}"
+            stroke-dashoffset="${circ}"
+            style="stroke:${gradeColor}"
+            id="ringFill"
+          />
+
         </svg>
+
         <div class="score-num">${score}</div>
         <div class="score-pct">%</div>
       </div>
-      <div class="result-grade" style="color:${gradeColor}">${grade}</div>
-      <div class="result-sub">أجبت على ${answered} من ${total} سؤال</div>
+
+      <div class="result-grade" style="color:${gradeColor}">
+        ${grade}
+      </div>
+
+      <div class="result-sub">
+        أجبت على ${answered} من ${total} سؤال
+      </div>
+
       <div class="result-stats">
-        <div class="rs"><div class="n" style="color:var(--success)">${correct}</div><div class="l">صحيح</div></div>
-        <div class="rs"><div class="n" style="color:var(--danger)">${wrong}</div><div class="l">خطأ</div></div>
-        <div class="rs"><div class="n" style="color:var(--accent)">${total - answered < 0 ? 0 : total - answered}</div><div class="l">تخطي</div></div>
+
+        <div class="rs">
+          <div class="n" style="color:var(--success)">
+            ${correct}
+          </div>
+          <div class="l">صحيح</div>
+        </div>
+
+        <div class="rs">
+          <div class="n" style="color:var(--danger)">
+            ${wrong}
+          </div>
+          <div class="l">خطأ</div>
+        </div>
+
+        <div class="rs">
+          <div class="n" style="color:var(--accent)">
+            ${total - answered < 0 ? 0 : total - answered}
+          </div>
+          <div class="l">تخطي</div>
+        </div>
+
       </div>
     </div>
 
     <div class="result-actions">
-      ${wrongSet.length ? `<button class="btn btn-retry" onclick="retryWrong()"><i class="fa-solid fa-rotate-right"></i> إعادة الخطأ (${wrongSet.length})</button>` : ''}
-      <button class="btn btn-home" onclick="init(QUESTIONS)"><i class="fa-solid fa-shuffle"></i> امتحان جديد عشوائي</button>
-      <a href="https://Nokhpa TEAM.github.io/exam/pediatric/index.html" class="btn btn-home" style="text-decoration:none;"><i class="fa-solid fa-house"></i> رجوع للمادة</a>
+
+      ${
+        wrongSet.length
+        ? `
+          <button class="btn btn-retry" onclick="retryWrong()">
+            <i class="fa-solid fa-rotate-right"></i>
+            إعادة الخطأ (${wrongSet.length})
+          </button>
+        `
+        : ''
+      }
+
+      <button class="btn btn-home" onclick="init(QUESTIONS)">
+        <i class="fa-solid fa-shuffle"></i>
+        امتحان جديد عشوائي
+      </button>
+
+      <a
+        href="https://Nokhpa TEAM.github.io/exam/pediatric/index.html"
+        class="btn btn-home"
+        style="text-decoration:none;"
+      >
+        <i class="fa-solid fa-house"></i>
+        رجوع للمادة
+      </a>
+
     </div>
 
     <div style="margin-top:28px">
-      <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--text2)">📋 تقرير مفصّل</div>
-      ${reportHTML}
-    </div>`;
 
-  setTimeout(() => { document.getElementById('ringFill').style.strokeDashoffset = offset; }, 100);
-  window.scrollTo({top: 0, behavior: 'smooth'});
+      <div style="
+        font-size:14px;
+        font-weight:700;
+        margin-bottom:12px;
+        color:var(--text2);
+      ">
+        📋 تقرير مفصّل
+      </div>
+
+      ${reportHTML}
+
+    </div>
+  `;
+
+  setTimeout(() => {
+    document.getElementById('ringFill').style.strokeDashoffset = offset;
+  }, 100);
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
 }
+
 
 /* RETRY WRONG */
 function retryWrong() {
   const pool = [...wrongSet];
-  questions = shuffle(pool); i = 0; correct = 0; wrong = 0;
+
+  questions = shuffle(pool);
+  i = 0;
+  correct = 0;
+  wrong = 0;
+
   answers = new Array(questions.length).fill(null);
-  wrongSet = []; answered = 0; timeLeft = totalTime;
-  startTimer(); render();
-  window.scrollTo({top: 0, behavior: 'smooth'});
+
+  wrongSet = [];
+  answered = 0;
+  timeLeft = totalTime;
+
+  startTimer();
+  render();
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
 }
 
 /* THEME */
